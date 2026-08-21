@@ -1,0 +1,36 @@
+server:
+  port: 8080
+  compression:
+    enabled: true
+
+spring:
+  application:
+    name: image-processing-app
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 55MB
+      file-size-threshold: 2MB
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
+  jackson:
+    default-property-inclusion: non_null
+
+app:
+  storage:
+    root: ./data
+    upload-dir: uploads
+    processed-dir: processed
+    tmp-dir: tmp
+    ttl-hours: 24   # 上传/结果文件保留时长（小时）
+  cleanup:
+    enabled: true             # 关闭后不再定时清理
+    cron: "0 0 4 * * *"       # 每天 04:00 执行（Spring 6 位 cron）
+
+logging:
+  level:
+    com.sjs.image: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{30} - %msg%n"

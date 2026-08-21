@@ -1,0 +1,14 @@
+package com.sjs.image.common;
+
+/**
+ * 业务处理异常。
+ */
+public class ProcessingException extends RuntimeException {
+    public ProcessingException(String message) {
+        super(message);
+    }
+
+    public ProcessingException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
