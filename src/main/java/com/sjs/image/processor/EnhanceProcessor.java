@@ -2,6 +2,7 @@ package com.sjs.image.processor;
 
 import com.sjs.image.common.TaskType;
 import com.sjs.image.dto.ProcessOptions;
+import com.sjs.image.ai.AiService;
 import com.sjs.image.service.ImageStorageService;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.bytedeco.opencv.opencv_core.Size;
@@ -17,16 +18,18 @@ import static org.bytedeco.opencv.global.opencv_imgproc.*;
 import static org.bytedeco.opencv.global.opencv_photo.fastNlMeansDenoisingColored;
 
 /**
- * 图片高清处理：Lanczos 放大 + 去噪 + 局部对比度增强(CLAHE) + 锐化(Unsharp Mask)。
- * 属于真实、可复现的增强管线，可显著提升清晰度与细节表现力。
+ * 图片高清处理：优先 AI 后端（本机 ONNX 超分 / 云端 API），
+ * 不可用时回退经典管线（Lanczos 放大 + 去噪 + CLAHE + 锐化）。
  */
 @Component
 public class EnhanceProcessor implements ImageProcessor {
 
     private final ImageStorageService storage;
+    private final AiService aiService;
 
-    public EnhanceProcessor(ImageStorageService storage) {
+    public EnhanceProcessor(ImageStorageService storage, AiService aiService) {
         this.storage = storage;
+        this.aiService = aiService;
     }
 
     @Override
@@ -42,6 +45,16 @@ public class EnhanceProcessor implements ImageProcessor {
             int srcW = src.cols();
             int srcH = src.rows();
             int scale = opts.getScale();
+
+            // AI 增强优先（本机模型 / 云端）
+            progress.onProgress(10, "AI 超分辨率增强 x" + scale);
+            Mat ai = aiService.enhance(src, scale, opts.getSuperResAlgorithm(), opts.getSharpen(), progress, opts.getBackend());
+            if (ai != null) {
+                String algo = opts.getSuperResAlgorithm() == null ? "auto" : opts.getSuperResAlgorithm();
+                String sharper = opts.getSharpen() > 0 ? "；锐化" + opts.getSharpen() : "";
+                return saveAiResult(ai, sourceName, progress, algo + " scale=" + scale + "x" + sharper + "; " + srcW + "x" + srcH + " → " + (srcW * scale) + "x" + (srcH * scale));
+            }
+            progress.onProgress(12, "使用经典增强管线");
 
             progress.onProgress(20, "超分辨率放大 x" + scale);
             Mat upscaled = new Mat();
@@ -66,11 +79,21 @@ public class EnhanceProcessor implements ImageProcessor {
 
             released(upscaled, denoised, enhanced, blurred, sharpened);
             progress.onProgress(100, "处理完成");
-            String meta = "scale=" + scale + "x; " + srcW + "x" + srcH + " → " + (srcW * scale) + "x" + (srcH * scale);
+            String meta = "经典管线 scale=" + scale + "x; " + srcW + "x" + srcH + " → " + (srcW * scale) + "x" + (srcH * scale);
             return new Outcome(storeName, meta);
         } finally {
             src.release();
         }
+    }
+
+    /** 保存 AI 增强结果并返回 Outcome。 */
+    private Outcome saveAiResult(Mat ai, String sourceName, Progress progress, String meta) throws Exception {
+        progress.onProgress(92, "AI 超分输出");
+        String storeName = storage.resultStoreName(sourceName, ".png");
+        OpenCVUtils.write(ai, "png", 100, storage.resultPath(storeName));
+        ai.release();
+        progress.onProgress(100, "处理完成");
+        return new Outcome(storeName, "AI " + meta);
     }
 
     /** 基于 LAB 空间的 CLAHE：只增强亮度通道，避免色彩失真 */

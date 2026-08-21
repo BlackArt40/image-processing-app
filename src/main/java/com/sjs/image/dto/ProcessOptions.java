@@ -11,6 +11,9 @@ public class ProcessOptions {
     /** 任务类型 */
     private TaskType type;
 
+    /** 处理引擎：auto / classic / local（为空则按 app.ai.backend 全局配置） */
+    private String backend;
+
     // ---------- 格式转换 ----------
     /** 输出宽度（px，可选，与高度同时指定时生效） */
     private Integer width;
@@ -36,6 +39,10 @@ public class ProcessOptions {
     // ---------- 高清增强 ----------
     /** 放大倍数，默认 2 */
     private Integer scale = 2;
+    /** 超分算法：fsrcnn / espcn / lapsrn（local 后端时生效） */
+    private String superResAlgorithm;
+    /** 锐化增强强度 0-100（超分后追加 Unsharp 细节增强，默认 50） */
+    private Integer sharpen = 50;
 
     // ---------- 马赛克消除 ----------
     /** auto=自动检测马赛克区域；manual=手动遮罩（前端传入坐标，略简化） */
@@ -43,6 +50,9 @@ public class ProcessOptions {
 
     public TaskType getType() { return type; }
     public void setType(TaskType type) { this.type = type; }
+
+    public String getBackend() { return backend; }
+    public void setBackend(String backend) { this.backend = backend; }
 
     public Integer getWidth() { return width; }
     public void setWidth(Integer width) { this.width = width; }
@@ -66,6 +76,13 @@ public class ProcessOptions {
 
     public int getScale() { return scale == null ? 2 : Math.min(Math.max(scale, 1), 4); }
     public void setScale(Integer scale) { this.scale = scale; }
+
+    public String getSuperResAlgorithm() { return superResAlgorithm; }
+    public void setSuperResAlgorithm(String superResAlgorithm) { this.superResAlgorithm = superResAlgorithm; }
+
+    /** 锐化强度 0-100，空值按 50 */
+    public int getSharpen() { return sharpen == null ? 50 : Math.min(Math.max(sharpen, 0), 100); }
+    public void setSharpen(Integer sharpen) { this.sharpen = sharpen; }
 
     public String getMode() { return mode == null ? "auto" : mode; }
     public void setMode(String mode) { this.mode = mode; }

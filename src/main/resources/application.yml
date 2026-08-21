@@ -28,6 +28,10 @@ app:
   cleanup:
     enabled: true             # 关闭后不再定时清理
     cron: "0 0 4 * * *"       # 每天 04:00 执行（Spring 6 位 cron）
+  ai:
+    backend: local             # local | classic（模型不可用时自动回退经典）
+    super-res-model-dir: classpath:models              # 超分模型目录（文件 {algo}_x{scale}.pb）
+    super-res-algorithms: [edsr, fsrcnn, espcn, lapsrn]   # 可用超分算法（edsr 为高质量）
 
 logging:
   level:

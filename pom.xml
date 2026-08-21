@@ -34,7 +34,8 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- OpenCV via JavaCV：用于真实图像处理（增强、人脸磨皮、inpainting 去马赛克）、WebP 编解码 -->
+        <!-- OpenCV via JavaCV：用于真实图像处理（增强、人脸磨皮、inpainting 去马赛克）、
+        WebP 编解码、以及深度超分推理(DNN SuperRes, FSRCNN) -->
         <dependency>
             <groupId>org.bytedeco</groupId>
             <artifactId>javacv-platform</artifactId>

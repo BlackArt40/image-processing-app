@@ -185,7 +185,7 @@
         } else if (el.tagName === "SELECT" && el.dataset.key) {
           if (el.dataset.key === "scale") opts.scale = parseInt(el.value, 10);
           else if (el.dataset.key === "ratio") { if (el.value) opts.ratio = el.value; }
-          else opts.format = el.value;
+          else if (el.value !== "") opts[el.dataset.key] = el.value;   // backend 等通用 select
         } else if (el.tagName === "INPUT" && el.type === "range") {
           opts[el.dataset.key] = parseInt(el.value, 10);
         }
@@ -294,11 +294,17 @@
     }
   }
 
-  /* ---------- 压缩质量滑杆联动 ---------- */
+  /* ---------- 压缩质量/锐化滑杆联动 ---------- */
   $$('input[data-key="quality"]').forEach((r) => {
     r.addEventListener("input", () => {
       const out = r.closest(".field").querySelector("output[data-ql]");
       if (out) out.textContent = r.value + "%";
+    });
+  });
+  $$('input[data-key="sharpen"]').forEach((r) => {
+    r.addEventListener("input", () => {
+      const out = r.closest(".field").querySelector("output[data-sh]");
+      if (out) out.textContent = r.value;
     });
   });
 
