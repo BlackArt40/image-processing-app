@@ -205,6 +205,17 @@ main { max-width: 1240px; margin: 0 auto; padding: 30px clamp(16px, 4vw, 40px) 6
 
 .hint { margin: 0; font-size: 12.5px; color: var(--text-3); }
 
+/* 选项旁的小感叹号提示 */
+.tip {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; margin-left: 6px; border-radius: 50%;
+  font-size: 10.5px; font-weight: 700; line-height: 1; cursor: help; font-style: normal;
+  color: var(--amber); background: var(--layer-2); border: 1px solid var(--line);
+  vertical-align: middle; transition: .2s;
+}
+.tip:hover { background: var(--amber); color: var(--amber-ink); border-color: transparent; }
+.check .tip { margin-left: auto; }
+
 /* -------- 进度条 -------- */
 .progress { margin-top: 2px; }
 .progress-track { height: 8px; border-radius: 99px; background: var(--layer-2); border: 1px solid var(--line-soft); overflow: hidden; }

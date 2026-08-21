@@ -308,9 +308,38 @@
     });
   });
 
+  /* ---------- 高清增强：按算法适配可选倍率（LapSRN 无 x3 等） ---------- */
+  const ALGO_SCALES = {
+    "":  [2, 3, 4],   // 自动（默认按配置顺序取第一个可用算法 edsr）
+    edsr: [2, 3, 4],
+    fsrcnn: [2, 3, 4],
+    espcn: [2, 3, 4],
+    lapsrn: [2, 4],
+  };
+  function wireAlgorithmScales() {
+    const mod = $('.mod[data-mod="enhance"]');
+    if (!mod) return;
+    const algoSel = $('[data-key="superResAlgorithm"]', mod);
+    const scaleSel = $('select[data-key="scale"]', mod);
+    if (!algoSel || !scaleSel) return;
+
+    const sync = () => {
+      const allowed = ALGO_SCALES[algoSel.value] || [2, 3, 4];
+      Array.from(scaleSel.options).forEach((o) => {
+        o.hidden = !allowed.includes(parseInt(o.value, 10));
+      });
+      if (!allowed.includes(parseInt(scaleSel.value, 10))) {
+        scaleSel.value = String(allowed[0]);
+      }
+    };
+    algoSel.addEventListener("change", sync);
+    sync();
+  }
+
   /* ---------- 初始化 ---------- */
   document.addEventListener("DOMContentLoaded", () => {
     wireTabs();
+    wireAlgorithmScales();
     $$(".mod").forEach((root) => {
       root._module = new Module(root);
       // 初始禁用开始按钮

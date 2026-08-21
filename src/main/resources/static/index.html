@@ -94,14 +94,14 @@
 
         <div class="panel">
           <h3>处理选项</h3>
-          <label class="field"><span>处理引擎</span>
+          <label class="field"><span>处理引擎<i class="tip" title="自动=本机AI超分，需先运行 scripts/download-models.sh 下载模型（未下载会退化为经典）；经典=纯OpenCV，不调用任何模型">!</i></span>
             <select data-key="backend">
               <option value="">自动</option>
               <option value="classic">经典</option>
             </select>
           </label>
           <div class="opt-grid">
-            <label class="field"><span>超分算法</span>
+            <label class="field"><span>超分算法<i class="tip" title="EDSR高质量但较慢；FSRCNN最快、细节一般；LapSRN无×3（×3档会自动隐藏）">!</i></span>
               <select data-key="superResAlgorithm">
                 <option value="">自动</option>
                 <option value="edsr">EDSR（高质量）</option>
@@ -111,14 +111,14 @@
               </select>
             </label>
             <label class="field">
-              <span>放大倍数</span>
+              <span>放大倍数<i class="tip" title="倍数越高细节损失越大、耗时越长，推荐 2×">!</i></span>
               <select class="scale" data-key="scale">
                 <option value="2" selected>2×（推荐）</option>
                 <option value="3">3×</option>
                 <option value="4">4×</option>
               </select>
             </label>
-            <label class="field"><span>锐化增强 <output data-sh>50</output></span>
+            <label class="field"><span>锐化增强 <output data-sh>50</output><i class="tip" title="增强边缘清晰度；过高会产生明显白边/光晕，建议 50 左右">!</i></span>
               <input type="range" min="0" max="100" value="50" data-key="sharpen" aria-label="锐化增强强度">
             </label>
           </div>
@@ -177,17 +177,11 @@
 
         <div class="panel">
           <h3>选择精修项目</h3>
-          <label class="field"><span>处理引擎</span>
-            <select data-key="backend">
-              <option value="">自动</option>
-              <option value="classic">经典</option>
-            </select>
-          </label>
           <div class="opt-grid toggles">
-            <label class="check"><input type="checkbox" name="retouch" data-key="whitening"><span class="box"></span>美白</label>
-            <label class="check"><input type="checkbox" name="retouch" data-key="smoothSkin"><span class="box"></span>磨皮</label>
-            <label class="check"><input type="checkbox" name="retouch" data-key="slimming"><span class="box"></span>瘦脸</label>
-            <label class="check"><input type="checkbox" name="retouch" data-key="legLengthening"><span class="box"></span>拉腿</label>
+            <label class="check"><input type="checkbox" name="retouch" data-key="whitening"><span class="box"></span>美白<i class="tip" title="整体提亮肤色、减轻偏暖，正脸/全身效果更佳">!</i></label>
+            <label class="check"><input type="checkbox" name="retouch" data-key="smoothSkin"><span class="box"></span>磨皮<i class="tip" title="对检测到的人脸区域做保边平滑，正脸效果更好">!</i></label>
+            <label class="check"><input type="checkbox" name="retouch" data-key="slimming"><span class="box"></span>瘦脸<i class="tip" title="需先检测到人脸；非正脸或多人时效果有限">!</i></label>
+            <label class="check"><input type="checkbox" name="retouch" data-key="legLengthening"><span class="box"></span>拉腿<i class="tip" title="拉伸下半身画面，可能造成轻微变形">!</i></label>
           </div>
           <button class="cta" data-go>开始精修</button>
           <div class="progress" hidden>
@@ -242,14 +236,8 @@
 
         <div class="panel">
           <h3>修复模式</h3>
-          <label class="field"><span>处理引擎</span>
-            <select data-key="backend">
-              <option value="">自动</option>
-              <option value="classic">经典</option>
-            </select>
-          </label>
           <div class="opt-grid toggles">
-            <label class="check radios"><input type="radio" name="inpaint-mode" data-key="mode" value="auto" checked><span class="box"></span>自动检测</label>
+            <label class="check radios"><input type="radio" name="inpaint-mode" data-key="mode" value="auto" checked><span class="box"></span>自动检测<i class="tip" title="对规则网格状马赛克有效；无明显马赛克时保持原图">!</i></label>
           </div>
           <button class="cta" data-go>开始修复</button>
           <div class="progress" hidden>
@@ -305,15 +293,15 @@
         <div class="panel">
           <h3>输出参数</h3>
           <div class="opt-grid convert">
-            <label class="field"><span>输出格式</span>
+            <label class="field"><span>输出格式<i class="tip" title="PNG 无损；JPG/WebP 支持质量压缩；环境不支持 WebP 编码时会回退">!</i></span>
               <select data-key="format"><option value="jpg" selected>JPG</option><option value="png">PNG</option><option value="webp">WebP</option></select>
             </label>
-            <label class="field"><span>图片比例</span>
+            <label class="field"><span>图片比例<i class="tip" title="按目标比例居中裁剪，超出部分会被裁掉">!</i></span>
               <select data-key="ratio"><option value="" selected>保持原始</option><option value="1:1">1:1 方形</option><option value="4:3">4:3</option><option value="3:4">3:4</option><option value="16:9">16:9</option><option value="9:16">9:16</option></select>
             </label>
-            <label class="field"><span>宽度 (px)</span><input type="number" data-key="width" min="16" placeholder="留空自动"></label>
-            <label class="field"><span>高度 (px)</span><input type="number" data-key="height" min="16" placeholder="留空自动"></label>
-            <label class="field"><span>压缩质量 <output data-ql>90%</output></span>
+            <label class="field"><span>宽度 (px)<i class="tip" title="同时填宽高会强制拉伸到指定尺寸、可能变形；只填一个按比例缩放">!</i></span><input type="number" data-key="width" min="16" placeholder="留空自动"></label>
+            <label class="field"><span>高度 (px)<i class="tip" title="同时填宽高会强制拉伸到指定尺寸、可能变形；只填一个按比例缩放">!</i></span><input type="number" data-key="height" min="16" placeholder="留空自动"></label>
+            <label class="field"><span>压缩质量 <output data-ql>90%</output><i class="tip" title="对 JPG/WebP 生效；PNG 无损，质量仅影响压缩级别">!</i></span>
               <input type="range" min="10" max="100" value="90" data-key="quality">
             </label>
           </div>
