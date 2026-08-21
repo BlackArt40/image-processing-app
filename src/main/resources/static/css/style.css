@@ -226,6 +226,8 @@ main { max-width: 1240px; margin: 0 auto; padding: 30px clamp(16px, 4vw, 40px) 6
 }
 .progress-caption { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text-2); }
 .progress-num { color: var(--amber); font-weight: 700; font-variant-numeric: tabular-nums; }
+.progress .pause-toggle { margin-top: 10px; width: 100%; }
+.progress .pause-toggle.paused { background: var(--amber); color: var(--amber-ink); border-color: transparent; }
 
 /* -------- 结果 -------- */
 .result { margin-top: 22px; animation: fadeUp .5s var(--ease) both; }

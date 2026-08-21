@@ -8,6 +8,8 @@ public enum TaskStatus {
     QUEUED,
     /** 处理中 */
     PROCESSING,
+    /** 已暂停（可继续） */
+    PAUSED,
     /** 处理完成 */
     SUCCESS,
     /** 处理失败 */

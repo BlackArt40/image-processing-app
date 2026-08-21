@@ -85,6 +85,7 @@
       this.file = null;
       this.taskId = null;
       this.timer = null;
+      this.paused = false;
       this.sourceUrl = null;
       this.resultName = null;
 
@@ -102,6 +103,7 @@
       this.bar = $(".progress-bar", root);
       this.stage = $(".progress-stage", root);
       this.num = $(".progress-num", root);
+      this.pauseBtn = $("[data-pause]", root);
 
       this.result = $(".result", root);
       this.state = $("[data-state]", this.result);
@@ -136,6 +138,7 @@
       });
 
       this.cta.addEventListener("click", () => this.start());
+      this.pauseBtn.addEventListener("click", () => this.togglePause());
       this.viewFull.addEventListener("click", () => this.sourceUrl && openLightbox(this.sourceUrl));
       this.download.addEventListener("click", (e) => {
         // href 由 resultName 生成
@@ -165,6 +168,7 @@
       if (this.thumb) URL.revokeObjectURL(this.thumb.src);
       this.sourceUrl = null;
       this.resultName = null;
+      this.paused = false;
       this.thumb && (this.thumb.src = "");
       this.dzFile.hidden = true;
       this.dzIdle.hidden = false;
@@ -204,8 +208,10 @@
     start() {
       if (!this.file || this.cta.disabled) return;
       this.cta.disabled = true;
+      this.paused = false;
       this.resetResult();
       this.showProgress(1, "上传中…");
+      this.refreshPause();
 
       const fd = new FormData();
       fd.append("file", this.file);
@@ -228,6 +234,12 @@
           .then((r) => r.json())
           .then((d) => {
             this.showProgress(d.progress, d.stage || "处理中…");
+            if (d.status === "PAUSED") {
+              this.paused = true;
+              this.refreshPause();
+              this.stopPolling();
+              return;
+            }
             if (d.status === "SUCCESS") return this.done(d);
             if (d.status === "FAILED") return this.fail(d.error || "处理失败");
             this.timer = setTimeout(hit, 700);
@@ -237,8 +249,42 @@
       hit();
     }
 
+    togglePause() {
+      if (!this.taskId) return;
+      this.pauseBtn.disabled = true;
+      const act = this.paused ? "resume" : "pause";
+      fetch("/api/tasks/" + this.taskId + "/" + act, { method: "POST" })
+        .then((r) => r.json())
+        .then((d) => {
+          this.pauseBtn.disabled = false;
+          if (act === "resume") {
+            this.paused = false;
+            this.refreshPause();
+            this.poll();
+          } else {
+            // 等待下一次轮询捕获 PAUSED 状态展示
+            this.paused = false;
+            this.refreshPause();
+          }
+        })
+        .catch(() => { this.pauseBtn.disabled = false; });
+    }
+
+    refreshPause() {
+      if (!this.pauseBtn) return;
+      if (!this.taskId || this.paused === null) {
+        this.pauseBtn.hidden = true;
+        return;
+      }
+      this.pauseBtn.hidden = false;
+      this.pauseBtn.textContent = this.paused ? "▶ 继续" : "⏸ 暂停";
+      this.pauseBtn.classList.toggle("paused", this.paused);
+    }
+
     done(d) {
       this.stopPolling();
+      this.paused = false;
+      this.pauseBtn && (this.pauseBtn.hidden = true);
       this.showProgress(100, "处理完成");
       this.resultName = this._nameOf(d.resultUrl);
       this.before.src = d.sourceUrl;
@@ -253,6 +299,8 @@
 
     fail(msg) {
       this.stopPolling();
+      this.paused = false;
+      this.pauseBtn && (this.pauseBtn.hidden = true);
       this.showProgress(0, msg || "处理失败");
       this.state.textContent = "失败";
       this.state.style.color = "var(--err)";

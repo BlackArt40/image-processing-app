@@ -2,7 +2,9 @@ package com.sjs.image.task;
 
 import com.sjs.image.common.TaskStatus;
 import com.sjs.image.common.TaskType;
+import com.sjs.image.dto.ProcessOptions;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -26,8 +28,12 @@ public class TaskRecord {
     private final AtomicReference<String> resultStoreName = new AtomicReference<>();
     /** 错误信息 */
     private final AtomicReference<String> error = new AtomicReference<>();
-    /** 是否已处理原图尺寸变化（供对比展示） */
+    /** 处理结果元信息（尺寸/算法等，供对比展示） */
     private final AtomicReference<String> sourceMeta = new AtomicReference<>();
+    /** 处理参数（供暂停后继续使用） */
+    private final AtomicReference<ProcessOptions> options = new AtomicReference<>();
+    /** 是否请求暂停 */
+    private final AtomicBoolean paused = new AtomicBoolean(false);
 
     public TaskRecord(String id, TaskType type, String sourceName, String sourceStoreName) {
         this.id = id;
@@ -37,7 +43,8 @@ public class TaskRecord {
     }
 
     public void update(int progress, String stage) {
-        if (this.status.get() == TaskStatus.SUCCESS || this.status.get() == TaskStatus.FAILED) {
+        TaskStatus s = this.status.get();
+        if (s == TaskStatus.SUCCESS || s == TaskStatus.FAILED || s == TaskStatus.PAUSED) {
             return;
         }
         this.status.set(TaskStatus.PROCESSING);
@@ -60,6 +67,32 @@ public class TaskRecord {
         this.stage.set("处理失败");
         this.error.set(error);
     }
+
+    /** 请求暂停：置暂停标志。 */
+    public void requestPause() {
+        this.paused.set(true);
+    }
+
+    /** 标记为已暂停（由调度层调用）。 */
+    public void markPaused() {
+        this.status.set(TaskStatus.PAUSED);
+        this.stage.set("已暂停");
+    }
+
+    /** 当前是否请求暂停。 */
+    public boolean isPauseRequested() {
+        return this.paused.get();
+    }
+
+    /** 继续：清除暂停标志并回到等待处理。 */
+    public void resume() {
+        this.paused.set(false);
+        this.status.set(TaskStatus.QUEUED);
+        this.stage.set("等待处理");
+    }
+
+    public void setOptions(ProcessOptions options) { this.options.set(options); }
+    public ProcessOptions getOptions() { return this.options.get(); }
 
     // ---- getters ----
     public String getId() { return id; }
