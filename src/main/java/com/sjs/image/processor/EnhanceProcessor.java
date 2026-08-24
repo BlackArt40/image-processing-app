@@ -57,12 +57,9 @@ public class EnhanceProcessor implements ImageProcessor {
             progress.onProgress(12, "使用经典增强管线");
 
             progress.onProgress(20, "超分辨率放大 x" + scale);
-            Mat upscaled = new Mat();
-            resize(src, upscaled, new Size(srcW * scale, srcH * scale), 0, 0, INTER_LANCZOS4);
-
-            // 经典管线三个阶段参数可调（0-100），0 表示跳过该阶段；
-            // 全程只维护一个 current，每次被替换时释放旧 Mat，保证无泄漏且恰好释放一次。
-            Mat current = upscaled;
+            // 逐级上采样：把大倍数拆成多步 ≤2× 的 Lanczos 放大，降低单次大倍率插值的振铃与模糊；
+            // 2× 仍为单步，行为不变。
+            Mat current = upscaleStepwise(src, scale);
 
             int denoise = opts.getDenoise();
             if (denoise > 0) {
@@ -150,5 +147,40 @@ public class EnhanceProcessor implements ImageProcessor {
         addWeighted(in, 1 + amount, blurred, -amount, 0, out);
         blurred.release();
         return out;
+    }
+
+    /**
+     * 逐级上采样：将放大倍率拆成若干 ≤2× 的因子逐级 Lanczos 放大，减少单次大倍率插值误差。
+     * 阶段数 n = ceil(log2(scale))，每级因子 scale^(1/n) ≤ 2；中间尺寸逐级逼近，末级落到目标尺寸。
+     * @return 放大后的新 Mat，所有权移交调用方（含 scale=1 时也返回副本）。
+     */
+    private Mat upscaleStepwise(Mat src, int scale) {
+        if (scale <= 1) {
+            return src.clone();
+        }
+        int n = (int) Math.ceil(Math.log(scale) / Math.log(2));
+        if (n <= 1) {
+            Mat out = new Mat();
+            resize(src, out, new Size(src.cols() * scale, src.rows() * scale), 0, 0, INTER_LANCZOS4);
+            return out;
+        }
+        double factor = Math.pow(scale, 1.0 / n);
+        int targetW = src.cols() * scale;
+        int targetH = src.rows() * scale;
+        Mat cur = src;
+        boolean own = false;
+        for (int i = 0; i < n; i++) {
+            boolean last = (i == n - 1);
+            int w = last ? targetW : (int) Math.round(src.cols() * Math.pow(factor, i + 1));
+            int h = last ? targetH : (int) Math.round(src.rows() * Math.pow(factor, i + 1));
+            Mat next = new Mat();
+            resize(cur, next, new Size(w, h), 0, 0, INTER_LANCZOS4);
+            if (own) {
+                cur.release();
+            }
+            cur = next;
+            own = true;
+        }
+        return cur;
     }
 }
