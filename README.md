@@ -134,8 +134,17 @@ src/main/resources/
 ├── opencv/        # Haar 级联人脸检测模型
 └── models/        # 超分模型（EDSR/FSRCNN/ESPCN/LapSRN；不入库，脚本拉取）
 scripts/
-    └── download-models.sh   # 一键下载超分模型
+    ├── download-models.sh   # 一键下载超分模型
+    └── bench.py             # 性能基线(single/conc) + 系统级验收(accept)
 samples/           # 真人脸部测试样张
+```
+
+### 验收与性能基线
+
+```bash
+python3 scripts/bench.py --port 8080 accept    # 对全部 6 个模块做 E2E 验收（SUCCESS+元数据+结果可下载）
+python3 scripts/bench.py --port 8080 single --type RETOUCH   # 单任务处理耗时分布
+python3 scripts/bench.py --port 8080 conc --workers 6        # 并发提交延迟
 ```
 
 ## 📝 说明

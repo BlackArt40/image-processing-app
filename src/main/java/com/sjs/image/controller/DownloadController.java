@@ -74,7 +74,7 @@ public class DownloadController {
         }
         Path path = "uploads".equals(dir) ? storage.sourcePath(storeName) : storage.resultPath(storeName);
         // 双重保险：即便底层存储部解析出越界路径，也强制限制在 base 目录内
-        Path base = "uploads".equals(dir) ? Path.of(storage.uploadPath()) : Path.of(storage.processedPath());
+        Path base = ("uploads".equals(dir) ? Path.of(storage.uploadPath()) : Path.of(storage.processedPath())).normalize();
         if (!path.normalize().startsWith(base)) {
             throw new ProcessingException("非法的文件路径");
         }

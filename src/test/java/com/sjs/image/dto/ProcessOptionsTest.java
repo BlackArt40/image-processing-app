@@ -47,4 +47,53 @@ class ProcessOptionsTest {
     void quality默认值为90() {
         assertEquals(90, new ProcessOptions().getQuality());
     }
+
+    @Test
+    void 去噪与对比度默认值为50() {
+        ProcessOptions opts = new ProcessOptions();
+        assertEquals(50, opts.getDenoise());
+        assertEquals(50, opts.getClarity());
+        assertEquals(50, opts.getSharpen());
+    }
+
+    @Test
+    void 去噪与对比度被钳制到0到100之间() {
+        ProcessOptions opts = new ProcessOptions();
+        opts.setDenoise(-3);
+        assertEquals(0, opts.getDenoise());
+        opts.setDenoise(250);
+        assertEquals(100, opts.getDenoise());
+
+        opts.setClarity(-3);
+        assertEquals(0, opts.getClarity());
+        opts.setClarity(250);
+        assertEquals(100, opts.getClarity());
+    }
+
+    @Test
+    void 滤镜强度默认值为100且被钳制() {
+        ProcessOptions opts = new ProcessOptions();
+        assertEquals(100, opts.getIntensity());
+        opts.setIntensity(-1);
+        assertEquals(0, opts.getIntensity());
+        opts.setIntensity(500);
+        assertEquals(100, opts.getIntensity());
+    }
+
+    @Test
+    void 滤镜预设默认空() {
+        assertEquals(null, new ProcessOptions().getFilter());
+    }
+
+    @Test
+    void 去雾与低光默认值为50且被钳制() {
+        ProcessOptions opts = new ProcessOptions();
+        assertEquals(50, opts.getDehaze());
+        assertEquals(50, opts.getLowLight());
+
+        opts.setDehaze(-1);
+        assertEquals(0, opts.getDehaze());
+        opts.setLowLight(200);
+        assertEquals(100, opts.getLowLight());
+    }
 }
