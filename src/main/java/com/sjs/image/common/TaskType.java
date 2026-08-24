@@ -13,5 +13,7 @@ public enum TaskType {
     /** 图片格式转换 */
     CONVERT,
     /** 滤镜 / 风格化 */
-    FILTER
+    FILTER,
+    /** 去雾 / 低光增强 */
+    DEHAZE
 }

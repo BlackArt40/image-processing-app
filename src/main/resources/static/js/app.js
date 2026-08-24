@@ -368,6 +368,18 @@
       if (out) out.textContent = r.value;
     });
   });
+  $$('input[data-key="dehaze"]').forEach((r) => {
+    r.addEventListener("input", () => {
+      const out = r.closest(".field").querySelector("output[data-dh]");
+      if (out) out.textContent = r.value;
+    });
+  });
+  $$('input[data-key="lowLight"]').forEach((r) => {
+    r.addEventListener("input", () => {
+      const out = r.closest(".field").querySelector("output[data-ll]");
+      if (out) out.textContent = r.value;
+    });
+  });
   $$('input[data-key="intensity"]').forEach((r) => {
     r.addEventListener("input", () => {
       const out = r.closest(".field").querySelector("output[data-fi]");

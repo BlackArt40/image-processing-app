@@ -70,6 +70,14 @@
       </span>
       <span class="tab-txt"><b>滤镜</b><small>风格 · 调色</small></span>
     </button>
+    <button class="tab" data-mod="dehaze">
+      <span class="tab-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7z"/><path d="M18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/>
+        </svg>
+      </span>
+      <span class="tab-txt"><b>去雾 / 低光</b><small>影调修复</small></span>
+    </button>
   </nav>
 
   <main>
@@ -398,6 +406,68 @@
             <button class="ghost pause-toggle" type="button" data-pause hidden>暂停</button>
           </div>
           <p class="hint">强度越低越保留原图细节，适合轻量调整色调。</p>
+        </div>
+      </div>
+      <div class="result" hidden>
+        <div class="result-head">
+          <span class="result-badge" data-state>完成</span>
+          <span class="result-meta"></span>
+          <div class="result-actions">
+            <button class="ghost" data-view-full>查看原图</button>
+            <a class="ghost download" data-download>下载结果</a>
+          </div>
+        </div>
+        <div class="compare" data-compare>
+          <div class="compare-before"><img alt="原图对比"></div>
+          <div class="compare-after"><img alt="处理结果"></div>
+          <div class="compare-divider" role="slider" tabindex="0" aria-label="拖动对比" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="handle"></span></div>
+          <label class="compare-tag t-before">原图</label>
+          <label class="compare-tag t-after">结果</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 去雾 / 低光 ============ -->
+    <section class="mod" data-mod="dehaze">
+      <div class="mod-head">
+        <div>
+          <h2>去雾 / 低光</h2>
+          <p>去除灰霾提通透，或对欠曝暗光照片做亮度补正。</p>
+        </div>
+        <span class="chip">影调修复</span>
+      </div>
+      <div class="mod-grid">
+        <div class="dropzone" tabindex="0" role="button" aria-label="上传图片">
+          <input type="file" accept="image/*" hidden>
+          <div class="dz-idle">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
+            <p>拖拽图片到此处，或<em>点击上传</em></p>
+            <small>支持 JPG / PNG / WEBP / BMP</small>
+          </div>
+          <div class="dz-file" hidden>
+            <img class="dz-thumb" alt="" aria-hidden="true">
+            <div class="dz-file-info"><b class="dz-name"></b><span class="dz-meta"></span></div>
+            <button class="dz-remove" type="button" aria-label="移除图片">×</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>影调修复</h3>
+          <div class="opt-grid filter">
+            <label class="field"><span>去雾 <output data-dh>50</output><i class="tip" title="基于暗通道先验去除灰霾/雾气，提升通透度；0=关闭">!</i></span>
+              <input type="range" min="0" max="100" value="50" data-key="dehaze" aria-label="去雾强度">
+            </label>
+            <label class="field"><span>低光增强 <output data-ll>50</output><i class="tip" title="对暗部做 gamma 提亮，改善欠曝照片；0=关闭">!</i></span>
+              <input type="range" min="0" max="100" value="50" data-key="lowLight" aria-label="低光增强强度">
+            </label>
+          </div>
+          <button class="cta" data-go>开始修复</button>
+          <div class="progress" hidden>
+            <div class="progress-track"><span class="progress-bar"></span></div>
+            <div class="progress-caption"><span class="progress-stage">等待处理</span><b class="progress-num">0%</b></div>
+            <button class="ghost pause-toggle" type="button" data-pause hidden>暂停</button>
+          </div>
+          <p class="hint">两项可单独或叠加使用；对正常照片影响较小。</p>
         </div>
       </div>
       <div class="result" hidden>

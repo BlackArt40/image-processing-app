@@ -67,6 +67,12 @@ public class ProcessOptions {
     /** 滤镜强度 0-100（默认 100，越接近 100 越接近纯滤镜效果） */
     private Integer intensity = 100;
 
+    // ---------- 去雾 / 低光 ----------
+    /** 去雾强度 0-100（0=关闭，默认 50） */
+    private Integer dehaze = 50;
+    /** 低光增强强度 0-100（0=关闭，默认 50） */
+    private Integer lowLight = 50;
+
     public TaskType getType() { return type; }
     public void setType(TaskType type) { this.type = type; }
 
@@ -120,4 +126,12 @@ public class ProcessOptions {
     /** 强度 0-100，空值按 100 */
     public int getIntensity() { return intensity == null ? 100 : Math.min(Math.max(intensity, 0), 100); }
     public void setIntensity(Integer intensity) { this.intensity = intensity; }
+
+    /** 去雾强度 0-100，空值按 50 */
+    public int getDehaze() { return dehaze == null ? 50 : Math.min(Math.max(dehaze, 0), 100); }
+    public void setDehaze(Integer dehaze) { this.dehaze = dehaze; }
+
+    /** 低光强度 0-100，空值按 50 */
+    public int getLowLight() { return lowLight == null ? 50 : Math.min(Math.max(lowLight, 0), 100); }
+    public void setLowLight(Integer lowLight) { this.lowLight = lowLight; }
 }
