@@ -32,6 +32,11 @@ app:
     backend: local             # local | classic（模型不可用时自动回退经典）
     super-res-model-dir: classpath:models              # 超分模型目录（文件 {algo}_x{scale}.pb）
     super-res-algorithms: [edsr, fsrcnn, espcn, lapsrn]   # 可用超分算法（edsr 为高质量）
+  executor:
+    # 图片任务线程池（为空时回退按可用核数自动推导）
+    core-pool-size:             # 核心线程数，如 4
+    max-pool-size:              # 最大线程数，如 8
+    queue-capacity: 48          # 任务队列容量，超过时空闲/新任务入队，队满则报「系统繁忙」
 
 logging:
   level:
