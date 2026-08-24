@@ -52,6 +52,10 @@ public class ProcessOptions {
     private String superResAlgorithm;
     /** 锐化增强强度 0-100（超分后追加 Unsharp 细节增强，默认 50） */
     private Integer sharpen = 50;
+    /** 经典管线：保边去噪强度 0-100（0=关闭，默认 50） */
+    private Integer denoise = 50;
+    /** 经典管线：CLAHE 局部对比度强度 0-100（0=关闭，默认 50） */
+    private Integer clarity = 50;
 
     // ---------- 马赛克消除 ----------
     /** auto=自动检测马赛克区域；manual=手动遮罩（前端传入坐标，略简化） */
@@ -98,6 +102,14 @@ public class ProcessOptions {
     /** 锐化强度 0-100，空值按 50 */
     public int getSharpen() { return sharpen == null ? 50 : Math.min(Math.max(sharpen, 0), 100); }
     public void setSharpen(Integer sharpen) { this.sharpen = sharpen; }
+
+    /** 去噪强度 0-100，空值按 50 */
+    public int getDenoise() { return denoise == null ? 50 : Math.min(Math.max(denoise, 0), 100); }
+    public void setDenoise(Integer denoise) { this.denoise = denoise; }
+
+    /** 对比度强度 0-100，空值按 50 */
+    public int getClarity() { return clarity == null ? 50 : Math.min(Math.max(clarity, 0), 100); }
+    public void setClarity(Integer clarity) { this.clarity = clarity; }
 
     public String getMode() { return mode == null ? "auto" : mode; }
     public void setMode(String mode) { this.mode = mode; }

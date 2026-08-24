@@ -4,7 +4,7 @@
 
 | 模块 | 说明 | 实现要点 |
 | --- | --- | --- |
-| 🖼️ **高清增强** | 超分辨率放大并锐化细节，**多算法可选** | 本机深度超分 **EDSR / FSRCNN / ESPCN / LapSRN**（2/3/4×）+ CLAHE + 锐化；可切换经典 |
+| 🖼️ **高清增强** | 超分辨率放大并锐化细节，**多算法可选**；经典管线可调 | 本机深度超分 **EDSR / FSRCNN / ESPCN / LapSRN**（2/3/4×）；或经典管线（Lanczos + CLAHE + 锐化）+ 去噪/对比度/锐化三相强度可调 |
 | ✨ **AI 智能精修** | 自动识别人像，选择性美白 / 磨皮 / 瘦脸 / 拉腿 | OpenCV Haar 级联人脸检测 + 双边滤波 + 脸部收窄 + 下半部拉伸 |
 | 🧩 **马赛克消除** | 自动定位马赛克区域并智能恢复被遮挡内容 | Canny 边缘 + 形态学闭运算定位遮罩，`cv::inpaint`(TELEA) 修复 |
 | 🔄 **格式转换** | 自定义输出尺寸、比例、压缩质量与格式 | 支持 JPG / PNG / WebP，居中裁剪至目标比例 |
@@ -103,7 +103,8 @@ app:
 ```json
 // 高清增强（本机 AI 超分，可选算法）
 {"type":"ENHANCE","scale":2,"superResAlgorithm":"lapsrn"}
-{"type":"ENHANCE","scale":2,"backend":"classic"}
+// 高清增强经典模式：去噪/对比度/锐化三相可调（0-100，0=关闭，默认 50）
+{"type":"ENHANCE","scale":2,"backend":"classic","denoise":20,"clarity":80,"sharpen":65}
 // AI 精修（可多选）
 {"type":"RETOUCH","whitening":true,"smoothSkin":true,"slimming":true,"legLengthening":true}
 // 马赛克消除

@@ -59,28 +59,46 @@ public class EnhanceProcessor implements ImageProcessor {
             Mat upscaled = new Mat();
             resize(src, upscaled, new Size(srcW * scale, srcH * scale), 0, 0, INTER_LANCZOS4);
 
-            progress.onProgress(45, "降噪处理");
-            Mat denoised = new Mat();
-            // 保边去噪：替代 fastNlMeansDenoisingColored —— 后者全图开销极大（A/B 实测 p50 ≈13s），
-            // bilateralFilter 同环境 p50 ≈0.7s（约快 19 倍），放大后适度去噪并抑制后续锐化的噪声放大。
-            bilateralFilter(upscaled, denoised, 9, 60, 60);
+            // 经典管线三个阶段参数可调（0-100），0 表示跳过该阶段；
+            // 全程只维护一个 current，每次被替换时释放旧 Mat，保证无泄漏且恰好释放一次。
+            Mat current = upscaled;
 
-            progress.onProgress(65, "局部对比度增强");
-            Mat enhanced = claheEnhance(denoised);
+            int denoise = opts.getDenoise();
+            if (denoise > 0) {
+                progress.onProgress(45, "保边去噪 " + denoise + "%");
+                double sigma = 30 + denoise / 100.0 * 60; // 30~90
+                Mat denoised = new Mat();
+                bilateralFilter(current, denoised, 9, sigma, sigma);
+                current.release();
+                current = denoised;
+            }
+
+            int clarity = opts.getClarity();
+            if (clarity > 0) {
+                progress.onProgress(65, "局部对比度 " + clarity + "%");
+                double clip = 1.0 + clarity / 100.0 * 3.0; // 1.0~4.0
+                Mat enhanced = claheEnhance(current, clip);
+                current.release();
+                current = enhanced;
+            }
 
             progress.onProgress(85, "细节锐化");
-            Mat sharpened = new Mat();
-            Mat blurred = new Mat();
-            GaussianBlur(enhanced, blurred, new Size(0, 0), 3.0);
-            addWeighted(enhanced, 1.6, blurred, -0.6, 0, sharpened);
+            Mat sharpened;
+            if (opts.getSharpen() > 0) {
+                sharpened = sharpen(current, opts.getSharpen());
+                current.release();
+            } else {
+                sharpened = current; // 关闭锐化时直接输出，所有权移交给 sharpened
+            }
 
             progress.onProgress(92, "输出结果");
             String storeName = storage.resultStoreName(sourceName, ".jpg");
             OpenCVUtils.write(sharpened, "jpg", 96, storage.resultPath(storeName));
+            sharpened.release();
 
-            released(upscaled, denoised, enhanced, blurred, sharpened);
             progress.onProgress(100, "处理完成");
-            String meta = "经典管线 scale=" + scale + "x; " + srcW + "x" + srcH + " → " + (srcW * scale) + "x" + (srcH * scale);
+            String meta = "经典管线 scale=" + scale + "x; 去噪" + denoise + "/对比度" + clarity
+                    + "/锐化" + opts.getSharpen() + "; " + srcW + "x" + srcH + " → " + (srcW * scale) + "x" + (srcH * scale);
             return new Outcome(storeName, meta);
         } finally {
             src.release();
@@ -97,8 +115,8 @@ public class EnhanceProcessor implements ImageProcessor {
         return new Outcome(storeName, "AI " + meta);
     }
 
-    /** 基于 LAB 空间的 CLAHE：只增强亮度通道，避免色彩失真 */
-    private Mat claheEnhance(Mat bgr) {
+    /** 基于 LAB 空间的 CLAHE：只增强亮度通道，避免色彩失真。clipLimit 为对比度阈值。 */
+    private Mat claheEnhance(Mat bgr, double clipLimit) {
         Mat lab = new Mat();
         cvtColor(bgr, lab, COLOR_BGR2Lab);
 
@@ -106,7 +124,7 @@ public class EnhanceProcessor implements ImageProcessor {
         split(lab, labChannels);
 
         Mat l = new Mat();
-        CLAHE clahe = createCLAHE(2.0, new Size(8, 8));
+        CLAHE clahe = createCLAHE(clipLimit, new Size(8, 8));
         clahe.apply(labChannels.get(0), l);
 
         org.bytedeco.opencv.opencv_core.MatVector merged = new org.bytedeco.opencv.opencv_core.MatVector(3);
@@ -122,11 +140,14 @@ public class EnhanceProcessor implements ImageProcessor {
         return out;
     }
 
-    private void released(Mat... mats) {
-        for (Mat m : mats) {
-            if (m != null) {
-                m.release();
-            }
-        }
+    /** Unsharp Mask 锐化：amount 随强度 0.3~1.2，与 AI 路径一致。 */
+    private Mat sharpen(Mat in, int sharpen) {
+        double amount = 0.3 + sharpen / 100.0 * 0.9;
+        Mat blurred = new Mat();
+        GaussianBlur(in, blurred, new Size(0, 0), 3.0);
+        Mat out = new Mat();
+        addWeighted(in, 1 + amount, blurred, -amount, 0, out);
+        blurred.release();
+        return out;
     }
 }

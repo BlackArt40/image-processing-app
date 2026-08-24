@@ -356,6 +356,18 @@
       if (out) out.textContent = r.value;
     });
   });
+  $$('input[data-key="denoise"]').forEach((r) => {
+    r.addEventListener("input", () => {
+      const out = r.closest(".field").querySelector("output[data-dn]");
+      if (out) out.textContent = r.value;
+    });
+  });
+  $$('input[data-key="clarity"]').forEach((r) => {
+    r.addEventListener("input", () => {
+      const out = r.closest(".field").querySelector("output[data-cl]");
+      if (out) out.textContent = r.value;
+    });
+  });
   $$('input[data-key="intensity"]').forEach((r) => {
     r.addEventListener("input", () => {
       const out = r.closest(".field").querySelector("output[data-fi]");

@@ -129,6 +129,12 @@
             <label class="field"><span>锐化增强 <output data-sh>50</output><i class="tip" title="增强边缘清晰度；过高会产生明显白边/光晕，建议 50 左右">!</i></span>
               <input type="range" min="0" max="100" value="50" data-key="sharpen" aria-label="锐化增强强度">
             </label>
+            <label class="field"><span>保边降噪 <output data-dn>50</output><i class="tip" title="经典模式生效；0=关闭。去噪越高画面越干净但细节越柔和">!</i></span>
+              <input type="range" min="0" max="100" value="50" data-key="denoise" aria-label="保边降噪强度">
+            </label>
+            <label class="field"><span>局部对比度 <output data-cl>50</output><i class="tip" title="经典模式生效；0=关闭。提升明暗层次，过高会显生硬">!</i></span>
+              <input type="range" min="0" max="100" value="50" data-key="clarity" aria-label="局部对比度强度">
+            </label>
           </div>
           <button class="cta" data-go>开始处理</button>
           <div class="progress" hidden>
