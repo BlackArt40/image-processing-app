@@ -89,6 +89,15 @@ public class ImageStorageService {
         return resolveUnsafe(props.processedPath()).resolve(storeName).normalize();
     }
 
+    /** 删除某个已落盘的上传文件（用于任务入队失败时的回滚）。 */
+    public void deleteUploaded(String storeName) {
+        try {
+            Files.deleteIfExists(sourcePath(storeName));
+        } catch (IOException ex) {
+            log.warn("回滚删除上传文件失败: {}", storeName, ex);
+        }
+    }
+
     public String extensionOf(String name) {
         int dot = name.lastIndexOf('.');
         if (dot < 0 || dot == name.length() - 1) {

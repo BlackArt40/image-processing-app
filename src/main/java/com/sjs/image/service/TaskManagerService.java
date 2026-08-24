@@ -94,7 +94,15 @@ public class TaskManagerService {
         record.setOptions(opts);
         tasks.put(id, record);
 
-        executor.execute(() -> run(record));
+        try {
+            executor.execute(() -> run(record));
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            // 任务池已满：立即回滚已落盘文件与内存记录，抛出明确的业务异常，而非占用上传线程排队执行
+            tasks.remove(id);
+            storage.deleteUploaded(storeName);
+            log.warn("任务入队失败（并发已满）: type={}", opts.getType());
+            throw new ProcessingException("系统繁忙，请稍后重试");
+        }
         return record;
     }
 
