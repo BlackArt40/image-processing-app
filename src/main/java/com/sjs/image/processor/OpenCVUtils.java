@@ -21,6 +21,11 @@ import static org.bytedeco.opencv.global.opencv_imgproc.cvtColor;
  */
 public final class OpenCVUtils {
 
+    /** 单边最大像素，防止解压炸弹/超大图片消耗过多内存 */
+    private static final int MAX_DIMENSION = 12000;
+    /** 最大总像素数，防止宽高比极端的图片绕过单边限制 */
+    private static final long MAX_PIXELS = 50_000_000L; // 50MP
+
     private OpenCVUtils() {}
 
     /** 读取任意图片为 3 通道 BGR Mat */
@@ -28,6 +33,11 @@ public final class OpenCVUtils {
         Mat mat = imread(path.toString());
         if (mat == null || mat.empty()) {
             throw new ProcessingException("无法解析图片文件: " + path.getFileName());
+        }
+        // 解码尺寸守卫：过大图片直接释放并拒绝，避免占用并耗尽内存
+        if (!assertSafeImageSize(mat.cols(), mat.rows())) {
+            mat.release();
+            throw new ProcessingException("图片尺寸过大，请上传小于 50MP 的图片");
         }
         if (mat.channels() == 4) {
             Mat bgr = new Mat();
@@ -82,5 +92,14 @@ public final class OpenCVUtils {
 
     private static int clamp(int quality) {
         return Math.max(1, Math.min(100, quality));
+    }
+
+    /** 解码尺寸守卫：单边不超限、总像素不超 50MP；返回是否安全。 */
+    static boolean assertSafeImageSize(int width, int height) {
+        if (width <= 0 || height <= 0) {
+            return false;
+        }
+        return width <= MAX_DIMENSION && height <= MAX_DIMENSION
+                && (long) width * height <= MAX_PIXELS;
     }
 }

@@ -69,6 +69,16 @@ public class ImageStorageService {
         return base + (newExt.startsWith(".") ? newExt : "." + newExt);
     }
 
+    /** 上传目录绝对路径 */
+    public String uploadPath() {
+        return props.uploadPath();
+    }
+
+    /** 结果目录绝对路径 */
+    public String processedPath() {
+        return props.processedPath();
+    }
+
     /** 解析存储名对应的绝对路径（含上传目录） */
     public Path sourcePath(String storeName) {
         return resolveUnsafe(props.uploadPath()).resolve(storeName).normalize();
@@ -85,20 +95,6 @@ public class ImageStorageService {
             return ".jpg";
         }
         return name.substring(dot).toLowerCase(Locale.ROOT);
-    }
-
-    public String baseName(String name) {
-        int dot = name.lastIndexOf('.');
-        return dot < 0 ? name : name.substring(0, dot);
-    }
-
-    /** 按大小限制（字节）读取 source 内容；返回缓冲字节 */
-    public byte[] readBytes(Path path, int maxBytes) throws IOException {
-        long size = Files.size(path);
-        if (size > maxBytes) {
-            throw new ProcessingException("图片过大，超出内存限制");
-        }
-        return Files.readAllBytes(path);
     }
 
     private Path resolveUnsafe(String dir) {

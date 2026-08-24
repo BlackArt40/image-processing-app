@@ -34,6 +34,10 @@ public class TaskRecord {
     private final AtomicReference<ProcessOptions> options = new AtomicReference<>();
     /** 是否请求暂停 */
     private final AtomicBoolean paused = new AtomicBoolean(false);
+    /** 终态完成时间（成功/失败），用于终态任务的内存回收 */
+    private final AtomicReference<Long> finishedAt = new AtomicReference<>();
+    /** 运行租约：同一时间仅允许一个 worker 处理本任务，防止暂停/继续竞态下并发双执行 */
+    private final AtomicBoolean running = new AtomicBoolean(false);
 
     public TaskRecord(String id, TaskType type, String sourceName, String sourceStoreName) {
         this.id = id;
@@ -57,6 +61,7 @@ public class TaskRecord {
         this.status.set(TaskStatus.SUCCESS);
         this.stage.set("处理完成");
         this.resultStoreName.set(resultStoreName);
+        this.finishedAt.set(System.currentTimeMillis());
         if (sourceMeta != null) {
             this.sourceMeta.set(sourceMeta);
         }
@@ -66,6 +71,26 @@ public class TaskRecord {
         this.status.set(TaskStatus.FAILED);
         this.stage.set("处理失败");
         this.error.set(error);
+        this.finishedAt.set(System.currentTimeMillis());
+    }
+
+    /** 终态完成时间；未完成返回 null。 */
+    public Long getFinishedAt() { return finishedAt.get(); }
+
+    /** 是否为不可回到队列的终态。 */
+    public boolean isTerminal() {
+        TaskStatus s = status.get();
+        return s == TaskStatus.SUCCESS || s == TaskStatus.FAILED;
+    }
+
+    /** 尝试获取运行租约；成功返回 true（同一时刻仅一个 worker 可拿到）。 */
+    public boolean tryBeginRun() {
+        return running.compareAndSet(false, true);
+    }
+
+    /** 释放运行租约。 */
+    public void endRun() {
+        running.set(false);
     }
 
     /** 请求暂停：置暂停标志。 */
@@ -84,8 +109,11 @@ public class TaskRecord {
         return this.paused.get();
     }
 
-    /** 继续：清除暂停标志并回到等待处理。 */
+    /** 继续：清除暂停标志并回到等待处理。终态（成功/失败）不可再回到队列。 */
     public void resume() {
+        if (isTerminal()) {
+            return; // 终态任务不可被恢复
+        }
         this.paused.set(false);
         this.status.set(TaskStatus.QUEUED);
         this.stage.set("等待处理");

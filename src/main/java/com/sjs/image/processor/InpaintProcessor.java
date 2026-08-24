@@ -39,7 +39,8 @@ public class InpaintProcessor implements ImageProcessor {
         Mat src = OpenCVUtils.readBgr(source);
         try {
             progress.onProgress(30, "自动定位马赛克区域");
-            Mat mask = detectMosaicMask(src);
+            MosaicResult mosaic = detectMosaicMask(src);
+            Mat mask = mosaic.mask();
 
             if (isNearlyEmpty(mask)) {
                 progress.onProgress(100, "未检测到明显马赛克区域，原图已返回");
@@ -64,7 +65,7 @@ public class InpaintProcessor implements ImageProcessor {
             progress.onProgress(100, "处理完成");
 
             double percent = (double) area / (src.rows() * src.cols() + 1) * 100;
-            String meta = String.format("已覆盖 %d 处马赛克区域（约 %.1f%% 画面）", maskRegions, percent);
+            String meta = String.format("已覆盖 %d 处马赛克区域（约 %.1f%% 画面）", mosaic.regions(), percent);
             return new Outcome(storeName, meta);
         } finally {
             src.release();
@@ -77,7 +78,7 @@ public class InpaintProcessor implements ImageProcessor {
      * 2) 闭运算连接网格线成块；
      * 3) 取连通区域作为修复遮罩。
      */
-    private Mat detectMosaicMask(Mat src) {
+    private MosaicResult detectMosaicMask(Mat src) {
         Mat gray = new Mat();
         cvtColor(src, gray, COLOR_BGR2GRAY);
 
@@ -111,15 +112,15 @@ public class InpaintProcessor implements ImageProcessor {
                 count++;
             }
         }
-        maskRegions = count;
 
         hierarchy.release();
         kernel.release();
         gray.release(); edges.release(); closed.release(); opened.release();
-        return mask;
+        return new MosaicResult(mask, count);
     }
 
-    private int maskRegions = 0;
+    /** 马赛克检测结果：遮罩 + 覆盖区域数量（两者同属一次检测，避免共享可变字段带来的并发竞争）。 */
+    private record MosaicResult(Mat mask, int regions) {}
 
     private boolean isNearlyEmpty(Mat mask) {
         return countNonZero(mask) < 20;

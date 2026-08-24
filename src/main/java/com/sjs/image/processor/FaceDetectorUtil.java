@@ -1,5 +1,6 @@
 package com.sjs.image.processor;
 
+import com.sjs.image.common.ClasspathResourceUtils;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.bytedeco.opencv.opencv_core.RectVector;
 import org.bytedeco.opencv.opencv_objdetect.CascadeClassifier;
@@ -7,10 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,16 +50,9 @@ public final class FaceDetectorUtil {
         if (path == null) {
             synchronized (FaceDetectorUtil.class) {
                 if (cascadePath == null) {
-                    Path tmp = Files.createTempFile("haarcascade_frontalface", ".xml");
-                    try (InputStream in = FaceDetectorUtil.class.getClassLoader()
-                            .getResourceAsStream("opencv/haarcascade_frontalface_default.xml")) {
-                        if (in == null) {
-                            throw new IOException("级联模型资源缺失");
-                        }
-                        Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
-                    }
+                    Path tmp = ClasspathResourceUtils.toTempFile(
+                            "opencv/haarcascade_frontalface_default.xml", "haarcascade_frontalface", ".xml");
                     cascadePath = tmp.toAbsolutePath().toString();
-                    tmp.toFile().deleteOnExit();
                 }
                 path = cascadePath;
             }

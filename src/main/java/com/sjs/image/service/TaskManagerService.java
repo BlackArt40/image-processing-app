@@ -5,14 +5,16 @@ import com.sjs.image.common.ProcessingException;
 import com.sjs.image.common.ProcessingPausedException;
 import com.sjs.image.common.TaskStatus;
 import com.sjs.image.common.TaskType;
+import com.sjs.image.config.StorageProperties;
 import com.sjs.image.dto.ProcessOptions;
-import com.sjs.image.processor.Progress;
 import com.sjs.image.dto.TaskStatusResponse;
 import com.sjs.image.processor.ImageProcessor;
+import com.sjs.image.processor.Progress;
 import com.sjs.image.task.TaskRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,15 +38,20 @@ public class TaskManagerService {
     private static final Logger log = LoggerFactory.getLogger(TaskManagerService.class);
 
     private final ImageStorageService storage;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+    private final StorageProperties props;
     private final Executor executor;
     private final Map<TaskType, ImageProcessor> processors;
     private final Map<String, TaskRecord> tasks = new ConcurrentHashMap<>();
 
     public TaskManagerService(ImageStorageService storage,
+                              ObjectMapper objectMapper,
+                              StorageProperties props,
                               @Qualifier("imageTaskExecutor") Executor executor,
                               List<ImageProcessor> processorList) {
         this.storage = storage;
+        this.objectMapper = objectMapper;
+        this.props = props;
         this.executor = executor;
         this.processors = processorList.stream()
                 .collect(Collectors.toMap(ImageProcessor::type, Function.identity()));
@@ -91,22 +98,32 @@ public class TaskManagerService {
         return record;
     }
 
+    /** 单个线程执行一次处理；用 CAS 保证同一任务不会被并发双执行（暂停/继续竞态下安全）。 */
     private void run(TaskRecord record) {
-        ImageProcessor processor = processors.get(record.getType());
-        ProcessOptions opts = record.getOptions();
+        // 已结束或已处于暂停态（含排队中被暂停的残留 worker）时，直接退出，不占用 worker
+        if (record.isTerminal() || record.getStatus() == TaskStatus.PAUSED
+                || record.isPauseRequested() || !record.tryBeginRun()) {
+            return;
+        }
         try {
-            record.update(1, "开始处理");
-            var outcome = processor.process(
-                    storage.sourcePath(record.getSourceStoreName()),
-                    record.getSourceName(),
-                    opts,
-                    reportProgress(record));
-            record.succeed(outcome.storeName(), outcome.meta());
-        } catch (ProcessingPausedException pe) {
-            record.markPaused();
-        } catch (Throwable t) {
-            log.error("任务处理失败: {}", record.getId(), t);
-            record.fail("处理失败: " + safeMessage(t));
+            ImageProcessor processor = processors.get(record.getType());
+            ProcessOptions opts = record.getOptions();
+            try {
+                record.update(1, "开始处理");
+                var outcome = processor.process(
+                        storage.sourcePath(record.getSourceStoreName()),
+                        record.getSourceName(),
+                        opts,
+                        reportProgress(record));
+                record.succeed(outcome.storeName(), outcome.meta());
+            } catch (ProcessingPausedException pe) {
+                record.markPaused();
+            } catch (Throwable t) {
+                log.error("任务处理失败: {}", record.getId(), t);
+                record.fail("处理失败: " + safeMessage(t));
+            }
+        } finally {
+            record.endRun();
         }
     }
 
@@ -166,5 +183,26 @@ public class TaskManagerService {
             throw new ProcessingException("任务不存在: " + id);
         }
         return record;
+    }
+
+    /**
+     * 定期回收终态任务的内存记录，避免 tasks 只增不减导致内存泄漏。
+     * 保留时长与文件清理一致（app.storage.ttl-hours），默认每小时执行一次。
+     */
+    @Scheduled(fixedDelayString = "${app.cleanup.task-interval-ms:3600000}")
+    public void evictFinishedTasks() {
+        long cutoff = System.currentTimeMillis() - props.getTtlHours() * 3600_000L;
+        int removed = 0;
+        for (java.util.Iterator<Map.Entry<String, TaskRecord>> it = tasks.entrySet().iterator(); it.hasNext(); ) {
+            TaskRecord r = it.next().getValue();
+            Long finished = r.getFinishedAt();
+            if (r.isTerminal() && finished != null && finished < cutoff) {
+                it.remove();
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            log.info("已回收 {} 个终态任务记录", removed);
+        }
     }
 }

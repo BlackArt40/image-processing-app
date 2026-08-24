@@ -19,9 +19,9 @@ public class AiService {
     private final AiProperties props;
     private final OpenCvDnnSuperResEngine localSuperRes;
 
-    public AiService(AiProperties props) {
+    public AiService(AiProperties props, OpenCvDnnSuperResEngine localSuperRes) {
         this.props = props;
-        this.localSuperRes = new OpenCvDnnSuperResEngine(props);
+        this.localSuperRes = localSuperRes;
     }
 
     public String backend() {
@@ -60,5 +60,10 @@ public class AiService {
     /** 本机超分可用算法列表（供前端展示）。 */
     public List<String> localAlgorithms() {
         return localSuperRes.algorithms();
+    }
+
+    /** 超分算法 → 官方支持倍率（供前端渲染倍率下拉框，与引擎回退逻辑共用同一份事实来源）。 */
+    public java.util.Map<String, java.util.List<Integer>> superResScales() {
+        return localSuperRes.supportedScales();
     }
 }

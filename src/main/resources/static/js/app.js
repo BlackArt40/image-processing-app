@@ -237,6 +237,7 @@
             if (d.status === "PAUSED") {
               this.paused = true;
               this.refreshPause();
+              this.showProgress(d.progress, "已暂停（继续后将从当前阶段重新开始处理）");
               this.stopPolling();
               return;
             }
@@ -357,13 +358,16 @@
   });
 
   /* ---------- 高清增强：按算法适配可选倍率（LapSRN 无 x3 等） ---------- */
-  const ALGO_SCALES = {
-    "":  [2, 3, 4],   // 自动（默认按配置顺序取第一个可用算法 edsr）
+  // 后端引擎为单点事实来源：/api/ai/super-res/scales 返回 { 算法: [支持的倍率] }。
+  // 前端据此动态渲染倍率下拉框；请求失败时退回本地默认表，保证功能不因元数据接口异常而失效。
+  const DEFAULT_ALGO_SCALES = {
+    "":  [2, 3, 4],
     edsr: [2, 3, 4],
     fsrcnn: [2, 3, 4],
     espcn: [2, 3, 4],
     lapsrn: [2, 4],
   };
+  let ALGO_SCALES = { ...DEFAULT_ALGO_SCALES };
   function wireAlgorithmScales() {
     const mod = $('.mod[data-mod="enhance"]');
     if (!mod) return;
@@ -371,8 +375,8 @@
     const scaleSel = $('select[data-key="scale"]', mod);
     if (!algoSel || !scaleSel) return;
 
-    const sync = () => {
-      const allowed = ALGO_SCALES[algoSel.value] || [2, 3, 4];
+    const sync = (algoScales) => {
+      const allowed = algoScales[algoSel.value] || algoScales[""] || [2, 3, 4];
       Array.from(scaleSel.options).forEach((o) => {
         o.hidden = !allowed.includes(parseInt(o.value, 10));
       });
@@ -380,8 +384,16 @@
         scaleSel.value = String(allowed[0]);
       }
     };
-    algoSel.addEventListener("change", sync);
-    sync();
+    algoSel.addEventListener("change", () => sync(ALGO_SCALES));
+
+    fetch("/api/ai/super-res/scales")
+      .then((r) => { if (!r.ok) throw new Error("bad status"); return r.json(); })
+      .then((data) => {
+        ALGO_SCALES = { ...DEFAULT_ALGO_SCALES, ...data };
+        sync(ALGO_SCALES);
+      })
+      .catch(() => sync(DEFAULT_ALGO_SCALES));
+    sync(DEFAULT_ALGO_SCALES);
   }
 
   /* ---------- 初始化 ---------- */
