@@ -47,11 +47,12 @@ public class EnhanceProcessor implements ImageProcessor {
 
             // AI 增强优先（本机模型 / 云端）
             progress.onProgress(10, "AI 超分辨率增强 x" + scale);
-            Mat ai = aiService.enhance(src, scale, opts.getSuperResAlgorithm(), opts.getSharpen(), progress, opts.getBackend());
+            Mat ai = aiService.enhance(src, scale, opts.getSuperResAlgorithm(), opts.getSharpen(), opts.getClarity(), progress, opts.getBackend());
             if (ai != null) {
                 String algo = opts.getSuperResAlgorithm() == null ? "auto" : opts.getSuperResAlgorithm();
                 String sharper = opts.getSharpen() > 0 ? "；锐化" + opts.getSharpen() : "";
-                return saveAiResult(ai, sourceName, progress, algo + " scale=" + scale + "x" + sharper + "; " + srcW + "x" + srcH + " → " + (srcW * scale) + "x" + (srcH * scale));
+                String clarityTxt = opts.getClarity() > 0 ? "；对比度" + opts.getClarity() : "";
+                return saveAiResult(ai, sourceName, progress, algo + " scale=" + scale + "x" + sharper + clarityTxt + "; " + srcW + "x" + srcH + " → " + (srcW * scale) + "x" + (srcH * scale));
             }
             progress.onProgress(12, "使用经典增强管线");
 
