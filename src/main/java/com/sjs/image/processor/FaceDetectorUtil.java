@@ -19,14 +19,48 @@ import java.util.List;
 public final class FaceDetectorUtil {
 
     private static final Logger log = LoggerFactory.getLogger(FaceDetectorUtil.class);
+    /** 级联模型临时文件路径（进程内固定，懒加载） */
     private static volatile String cascadePath;
+    /**
+     * 每个工作线程复用一个 CascadeClassifier，避免每次检测都重复加载昂贵的 Haar 级联。
+     * 用 ThreadLocal 而非全局单例，规避多个 worker 线程同时访问同一原生对象的跨线程竞态。
+     */
+    private static final ThreadLocal<CascadeClassifier> CLASSIFIER =
+            ThreadLocal.withInitial(() -> {
+                try {
+                    CascadeClassifier c = new CascadeClassifier(resolveCascadePath());
+                    if (c.empty()) {
+                        c.close();
+                        throw new IllegalStateException("级联模型加载失败");
+                    }
+                    return c;
+                } catch (IOException e) {
+                    throw new IllegalStateException("级联模型加载失败", e);
+                }
+            });
 
     private FaceDetectorUtil() {}
+
+    /** 解析级联模型临时文件路径。 */
+    private static String resolveCascadePath() throws IOException {
+        String path = cascadePath;
+        if (path == null) {
+            synchronized (FaceDetectorUtil.class) {
+                if (cascadePath == null) {
+                    Path tmp = ClasspathResourceUtils.toTempFile(
+                            "opencv/haarcascade_frontalface_default.xml", "haarcascade_frontalface", ".xml");
+                    cascadePath = tmp.toAbsolutePath().toString();
+                }
+                path = cascadePath;
+            }
+        }
+        return path;
+    }
 
     /** 检测灰度图(或任意 Mat 内部会转灰度)中的人脸，返回 [x, y, w, h] 列表 */
     public static List<int[]> detect(Mat img) {
         try {
-            CascadeClassifier classifier = loadedClassifier();
+            CascadeClassifier classifier = CLASSIFIER.get();
             RectVector faces = new RectVector();
             classifier.detectMultiScale(img, faces, 1.1, 3,
                     org.bytedeco.opencv.global.opencv_objdetect.CASCADE_SCALE_IMAGE,
@@ -39,28 +73,10 @@ public final class FaceDetectorUtil {
             }
             faces.close();
             return result;
-        } catch (IOException e) {
+        } catch (IllegalStateException e) {
+            // 级联初始化失败：仅首次加载时报错，后续不走此路径
             log.warn("人脸检测不可用，跳过脸部精修: {}", e.getMessage());
             return List.of();
         }
-    }
-
-    private static CascadeClassifier loadedClassifier() throws IOException {
-        String path = cascadePath;
-        if (path == null) {
-            synchronized (FaceDetectorUtil.class) {
-                if (cascadePath == null) {
-                    Path tmp = ClasspathResourceUtils.toTempFile(
-                            "opencv/haarcascade_frontalface_default.xml", "haarcascade_frontalface", ".xml");
-                    cascadePath = tmp.toAbsolutePath().toString();
-                }
-                path = cascadePath;
-            }
-        }
-        CascadeClassifier classifier = new CascadeClassifier(path);
-        if (classifier.empty()) {
-            throw new IOException("级联模型加载失败: " + path);
-        }
-        return classifier;
     }
 }
