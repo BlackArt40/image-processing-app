@@ -11,5 +11,7 @@ public enum TaskType {
     /** 马赛克消除 */
     INPAINT,
     /** 图片格式转换 */
-    CONVERT
+    CONVERT,
+    /** 滤镜 / 风格化 */
+    FILTER
 }

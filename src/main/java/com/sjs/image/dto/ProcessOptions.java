@@ -36,6 +36,15 @@ public class ProcessOptions {
     /** 磨皮 */
     private boolean smoothSkin;
 
+    /** 美白强度 0-100（默认 50，与旧版固定效果一致） */
+    private Integer whiteningIntensity = 50;
+    /** 磨皮强度 0-100（默认 50） */
+    private Integer smoothSkinIntensity = 50;
+    /** 瘦脸强度 0-100（默认 50） */
+    private Integer slimmingIntensity = 50;
+    /** 拉腿强度 0-100（默认 50） */
+    private Integer legLengtheningIntensity = 50;
+
     // ---------- 高清增强 ----------
     /** 放大倍数，默认 2 */
     private Integer scale = 2;
@@ -47,6 +56,12 @@ public class ProcessOptions {
     // ---------- 马赛克消除 ----------
     /** auto=自动检测马赛克区域；manual=手动遮罩（前端传入坐标，略简化） */
     private String mode = "auto";
+
+    // ---------- 滤镜 / 风格化 ----------
+    /** 滤镜预设：mono / sepia / vintage / warm / cool / vivid */
+    private String filter;
+    /** 滤镜强度 0-100（默认 100，越接近 100 越接近纯滤镜效果） */
+    private Integer intensity = 100;
 
     public TaskType getType() { return type; }
     public void setType(TaskType type) { this.type = type; }
@@ -86,4 +101,11 @@ public class ProcessOptions {
 
     public String getMode() { return mode == null ? "auto" : mode; }
     public void setMode(String mode) { this.mode = mode; }
+
+    public String getFilter() { return filter; }
+    public void setFilter(String filter) { this.filter = filter; }
+
+    /** 强度 0-100，空值按 100 */
+    public int getIntensity() { return intensity == null ? 100 : Math.min(Math.max(intensity, 0), 100); }
+    public void setIntensity(Integer intensity) { this.intensity = intensity; }
 }

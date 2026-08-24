@@ -62,6 +62,14 @@
       </span>
       <span class="tab-txt"><b>格式转换</b><small>尺寸 · 比例 · 压缩</small></span>
     </button>
+    <button class="tab" data-mod="filter">
+      <span class="tab-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 8l6 1-6 6zm5-2l1 13 4-2-1-11 4 3 3-4z"/><circle cx="17" cy="18" r="3"/>
+        </svg>
+      </span>
+      <span class="tab-txt"><b>滤镜</b><small>风格 · 调色</small></span>
+    </button>
   </nav>
 
   <main>
@@ -315,6 +323,75 @@
             <button class="ghost pause-toggle" type="button" data-pause hidden>暂停</button>
           </div>
           <p class="hint">宽高留空则按比例或原图尺寸输出。</p>
+        </div>
+      </div>
+      <div class="result" hidden>
+        <div class="result-head">
+          <span class="result-badge" data-state>完成</span>
+          <span class="result-meta"></span>
+          <div class="result-actions">
+            <button class="ghost" data-view-full>查看原图</button>
+            <a class="ghost download" data-download>下载结果</a>
+          </div>
+        </div>
+        <div class="compare" data-compare>
+          <div class="compare-before"><img alt="原图对比"></div>
+          <div class="compare-after"><img alt="处理结果"></div>
+          <div class="compare-divider" role="slider" tabindex="0" aria-label="拖动对比" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="handle"></span></div>
+          <label class="compare-tag t-before">原图</label>
+          <label class="compare-tag t-after">结果</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 滤镜 ============ -->
+    <section class="mod" data-mod="filter">
+      <div class="mod-head">
+        <div>
+          <h2>滤镜</h2>
+          <p>为整幅图片套用风格化滤镜，一键调色、彰显氛围。</p>
+        </div>
+        <span class="chip">6 种预设</span>
+      </div>
+      <div class="mod-grid">
+        <div class="dropzone" tabindex="0" role="button" aria-label="上传图片">
+          <input type="file" accept="image/*" hidden>
+          <div class="dz-idle">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
+            <p>拖拽图片到此处，或<em>点击上传</em></p>
+            <small>支持 JPG / PNG / WEBP / BMP</small>
+          </div>
+          <div class="dz-file" hidden>
+            <img class="dz-thumb" alt="" aria-hidden="true">
+            <div class="dz-file-info"><b class="dz-name"></b><span class="dz-meta"></span></div>
+            <button class="dz-remove" type="button" aria-label="移除图片">×</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>选择滤镜</h3>
+          <div class="opt-grid filter">
+            <label class="field"><span>滤镜预设<i class="tip" title="黑白=去色；复古=经典棕色；胶卷=淡雅偏暖；暖阳=增暖降冷；清凉=增冷降暖；鲜艳=增强饱和度">!</i></span>
+              <select data-key="filter">
+                <option value="mono">黑白</option>
+                <option value="sepia">复古</option>
+                <option value="vintage">胶卷</option>
+                <option value="warm" selected>暖阳</option>
+                <option value="cool">清凉</option>
+                <option value="vivid">鲜艳</option>
+              </select>
+            </label>
+            <label class="field"><span>滤镜强度 <output data-fi>100%</output><i class="tip" title="100=纯滤镜效果；越低越接近原图，可用于轻调色">!</i></span>
+              <input type="range" min="0" max="100" value="100" data-key="intensity" aria-label="滤镜强度">
+            </label>
+          </div>
+          <button class="cta" data-go>应用滤镜</button>
+          <div class="progress" hidden>
+            <div class="progress-track"><span class="progress-bar"></span></div>
+            <div class="progress-caption"><span class="progress-stage">等待处理</span><b class="progress-num">0%</b></div>
+            <button class="ghost pause-toggle" type="button" data-pause hidden>暂停</button>
+          </div>
+          <p class="hint">强度越低越保留原图细节，适合轻量调整色调。</p>
         </div>
       </div>
       <div class="result" hidden>

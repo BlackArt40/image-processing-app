@@ -356,6 +356,12 @@
       if (out) out.textContent = r.value;
     });
   });
+  $$('input[data-key="intensity"]').forEach((r) => {
+    r.addEventListener("input", () => {
+      const out = r.closest(".field").querySelector("output[data-fi]");
+      if (out) out.textContent = r.value + "%";
+    });
+  });
 
   /* ---------- 高清增强：按算法适配可选倍率（LapSRN 无 x3 等） ---------- */
   // 后端引擎为单点事实来源：/api/ai/super-res/scales 返回 { 算法: [支持的倍率] }。
